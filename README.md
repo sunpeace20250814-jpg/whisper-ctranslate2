@@ -97,6 +97,47 @@ whisper-ctranslate2 audio.mp3 \
 - **max_new_tokens**: 對於長音頻，建議加上 `--max_new_tokens 486` 防止失控生成
 - **return_scores**: 使用 `--return_scores True` 取得置信度用於品質過濾
 
+## WhisperX Backend (Enhanced Accuracy + Word Timestamps)
+
+WhisperX 提供更精確的單詞級時間戳，透過 wav2vec2 對齊實現 ±0.1秒精度。
+
+### WhisperX Colab 安裝
+
+```python
+!pip install whisperx torch
+```
+
+### WhisperX 運行指令
+
+```bash
+whisper-ctranslate2 audio.mp3 \
+    --backend whisperx \
+    --model large-v3 \
+    --device cuda \
+    --batch_size 4 \
+    --language zh \
+    --word_timestamps True \
+    --output_dir /content/output
+```
+
+### WhisperX 特色
+
+| 特色 | 說明 |
+|------|------|
+| 單詞級時間戳 | ±0.1秒精度 |
+| wav2vec2對齊 | 增強單詞邊界 |
+| VAD預處理 | 減少幻覺 |
+| 自動格式偵測 | 支援更多格式 |
+
+### 比較：faster-whisper vs whisperx
+
+| 特性 | faster-whisper | whisperx |
+|------|---------------|----------|
+| 速度 | ⭐⭐⭐⭐⭐ 更快 | ⭐⭐⭐⭐ |
+| 時間戳 | 段落級 | **單詞級** ±0.1秒 |
+| 準確度 | 預設 | 對齊後更精確 |
+| 依賴 | ctranslate2 | transformers + wav2vec2 |
+
 # Supported audio formats
 
 The tool supports a wide range of audio formats. Formats are automatically detected and converted if needed.

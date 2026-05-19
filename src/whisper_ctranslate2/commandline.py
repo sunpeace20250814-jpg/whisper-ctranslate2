@@ -67,6 +67,13 @@ class CommandLine:
             help="Directory where to find a CTranslate2 Whisper model (e.g. fine-tuned model)",
         )
 
+        model_args.add_argument(
+            "--backend",
+            choices=["faster-whisper", "whisperx"],
+            default="faster-whisper",
+            help="Transcription backend: faster-whisper (fast, CTranslate2) or whisperx (accurate word timestamps)",
+        )
+
         caching_args = parser.add_argument_group("Model caching control options")
 
         caching_args.add_argument(

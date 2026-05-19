@@ -12,7 +12,8 @@ from .commandline import CommandLine
 from .exit_code import ExitCode
 from .languages import from_language_to_iso_code
 from .live import Live
-from .transcribe import Transcribe, TranscriptionOptions
+from .transcribe import Transcribe
+from .transcribe_whisperx import TranscribeWhisperX
 from .writers import get_writer
 
 
@@ -125,6 +126,7 @@ def main():
     speaker_num = args.pop("speaker_num")
     batched = args.pop("batched")
     batch_size = args.pop("batch_size")
+    backend = args.pop("backend")
 
     language = get_language(language, model_directory, model)
     options = get_transcription_options(args)
@@ -222,21 +224,35 @@ def main():
 
         return
 
-    try:
-        transcribe = Transcribe(
-            model_dir,
-            device,
-            device_index,
-            compute_type,
-            threads,
-            cache_directory,
-            local_files_only,
-            batched,
-            batch_size,
+    # Backend selection
+    if backend == "whisperx":
+        # WhisperX backend
+        if device == "auto":
+            device = "cuda"
+        transcribe = TranscribeWhisperX(
+            model_name=model,
+            device=device,
+            compute_type=compute_type,
+            batch_size=batch_size or 8,
+            language=language,
         )
-    except RuntimeError as e:
-        print(f"error: {e}")
-        exit(ExitCode.RUNTIME_ERROR)
+    else:
+        # Default faster-whisper backend
+        try:
+            transcribe = Transcribe(
+                model_dir,
+                device,
+                device_index,
+                compute_type,
+                threads,
+                cache_directory,
+                local_files_only,
+                batched,
+                batch_size,
+            )
+        except RuntimeError as e:
+            print(f"error: {e}")
+            exit(ExitCode.RUNTIME_ERROR)
 
     diarization = len(hf_token) > 0
 
