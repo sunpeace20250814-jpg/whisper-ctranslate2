@@ -1,4 +1,5 @@
 import numpy as np
+from collections import OrderedDict
 
 from faster_whisper.audio import decode_audio
 

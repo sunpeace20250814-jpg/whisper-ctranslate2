@@ -55,6 +55,8 @@ class TranscriptionOptions(NamedTuple):
     vad_max_speech_duration_s: Optional[int]
     vad_min_silence_duration_ms: Optional[int]
     multilingual: bool
+    max_new_tokens: Optional[int]
+    return_scores: bool
 
 
 class Transcribe:
@@ -187,6 +189,8 @@ class Transcribe:
                 vad_parameters=vad_parameters,
                 **batch_size,
                 multilingual=options.multilingual,
+                max_new_tokens=options.max_new_tokens,
+                return_scores=options.return_scores,
             )
 
             language_name = LANGUAGES[info.language].title()

@@ -372,6 +372,20 @@ class CommandLine:
             help="Perform language detection on every segment",
         )
 
+        algorithm_args.add_argument(
+            "--max_new_tokens",
+            type=CommandLine._optional_int,
+            default=None,
+            help="Maximum number of tokens to generate per segment. Prevents runaway generation on problematic audio. Recommended for long recordings.",
+        )
+
+        algorithm_args.add_argument(
+            "--return_scores",
+            type=CommandLine._str2bool,
+            default=False,
+            help="Return generation confidence scores for each segment. Useful for quality filtering.",
+        )
+
         vad_args = parser.add_argument_group("VAD filter arguments")
 
         vad_args.add_argument(

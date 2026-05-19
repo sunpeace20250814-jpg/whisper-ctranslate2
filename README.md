@@ -60,6 +60,43 @@ GPU execution requires the NVIDIA libraries cuBLAS 11.x to be installed on the s
 
 By default the best hardware available is selected for inference. You can use the options `--device` and `--device_index` to control manually the selection.
 
+# Google Colab T4 Optimization
+
+For Google Colab's T4 GPU (16GB VRAM), use these optimized settings:
+
+## Recommended Colab Configuration
+
+```bash
+pip install torch==2.5.1+cu124 ctranslate2==4.5.0 faster-whisper
+
+whisper-ctranslate2 audio.mp3 \
+    --model large-v3-turbo \
+    --device cuda \
+    --compute_type float16 \
+    --batched True \
+    --batch_size 4 \
+    --beam_size 5 \
+    --vad_filter True \
+    --vad_min_silence_duration_ms 500
+```
+
+## T4-Specific Settings
+
+| Parameter | Value | Reason |
+|-----------|-------|--------|
+| `--compute_type` | `float16` | T4最佳性價比，不支援bfloat16 |
+| `--batch_size` | `4-8` | T4 VRAM ~15GB，超過8可能OOM |
+| `--model` | `large-v3-turbo` | 最佳準確度/速度比 |
+| `--batched` | `True` | 額外2-4x加速 |
+| `--vad_filter` | `True` | ~2x加速，過濾無語音段落 |
+
+## Important Notes
+
+- **CUDA版本**: Colab使用CUDA 12.1，需升級到12.4以支援ctranslate2>=4.5.0
+- **不保證GPU**: Colab不保證特定GPU，A100經常缺貨
+- **max_new_tokens**: 對於長音頻，建議加上 `--max_new_tokens 486` 防止失控生成
+- **return_scores**: 使用 `--return_scores True` 取得置信度用於品質過濾
+
 # Supported audio formats
 
 The tool supports a wide range of audio formats. Formats are automatically detected and converted if needed.

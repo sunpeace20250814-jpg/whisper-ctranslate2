@@ -77,6 +77,8 @@ def get_transcription_options(args):
         vad_max_speech_duration_s=args.get("vad_max_speech_duration_s"),
         vad_min_silence_duration_ms=args.get("vad_min_silence_duration_ms"),
         multilingual=args.get("multilingual", False),
+        max_new_tokens=args.get("max_new_tokens"),
+        return_scores=args.get("return_scores", False),
     )
 
 
