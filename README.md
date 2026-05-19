@@ -1,0 +1,217 @@
+[![PyPI version](https://img.shields.io/pypi/v/whisper-ctranslate2.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/whisper-ctranslate2/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/whisper-ctranslate2.svg)](https://pypistats.org/packages/whisper-ctranslate2)
+
+# Introduction
+
+Whisper command line client compatible with original [OpenAI client](https://github.com/openai/whisper) based on CTranslate2.
+
+It uses [CTranslate2](https://github.com/OpenNMT/CTranslate2/) and [Faster-whisper](https://github.com/SYSTRAN/faster-whisper) Whisper implementation that is up to 4 times faster than openai/whisper for the same accuracy while using less memory.
+
+Key features:
+
+- ✅ 4x faster than OpenAI's Whisper at the same accuracy (up to 16X faster with batched inference)
+- ✅ OpenAI Whisper CLI compatibility (easier migration)
+- ✅ Docker image with pre-loaded models
+- ✅ Speaker Diarization (Speaker Identification)
+- ✅ Voice Activity Detection (VAD) Filter to improve quality
+- ✅ Load your own fine-tuned Whisper models
+- ✅ Live transcription from microphone
+- ✅ Color-coded confidence visualization
+- ✅ Extended audio format support (20+ formats via ffmpeg)
+
+# Installation
+
+## Python package
+
+To install the latest stable version, just type:
+
+    pip install whisper-ctranslate2
+
+## Using prebuild Docker image
+
+You can use build docker image. First pull the image:
+
+    docker pull ghcr.io/softcatala/whisper-ctranslate2:latest
+
+The Docker image includes the small, medium and large-v2 models.
+
+To run it:
+
+    docker run --gpus "device=0" \
+        -v "$(pwd)":/srv/files/ \
+        -it ghcr.io/softcatala/whisper-ctranslate2:latest \
+        /srv/files/e2e-tests/gossos.mp3 \
+        --output_dir /srv/files/
+
+Notes:
+
+- _--gpus "device=0"_ gives access to the GPU. If you do not have a GPU, remove this.
+- _"$(pwd)":/srv/files/_ maps your current directory to /srv/files/ inside the container
+
+If you always need to use a model that is not in the image, you can create a derived Docker image with the model preloaded or use Docker volumes to persist and share the model files.
+
+# CPU and GPU support
+
+GPU and CPU support is provided by [CTranslate2](https://github.com/OpenNMT/CTranslate2/).
+
+It has compatibility with x86-64 and AArch64/ARM64 CPU and integrates multiple backends that are optimized for these platforms: Intel MKL, oneDNN, OpenBLAS, Ruy, and Apple Accelerate.
+
+GPU execution requires the NVIDIA libraries cuBLAS 11.x to be installed on the system. Please refer to the [CTranslate2 documentation](https://opennmt.net/CTranslate2/installation.html)
+
+By default the best hardware available is selected for inference. You can use the options `--device` and `--device_index` to control manually the selection.
+
+# Supported audio formats
+
+The tool supports a wide range of audio formats. Formats are automatically detected and converted if needed.
+
+## Native formats (no additional software required)
+
+- MP3 (.mp3)
+- WAV (.wav)
+- FLAC (.flac)
+- OGG (.ogg)
+- M4A (.m4a)
+- MP4 video (.mp4)
+- MKV video (.mkv)
+- AVI video (.avi)
+- MOV video (.mov)
+- WebM video (.webm)
+
+## Extended formats (requires ffmpeg)
+
+If ffmpeg is installed on your system, additional formats are supported:
+
+- WMA (.wma)
+- AAC (.aac)
+- APE (.ape)
+- ALAC (.alac)
+- Opus (.opus)
+- M4B audiobook (.m4b)
+- MPC (.mpc)
+- TAK (.tak)
+- TTA (.tta)
+- WV (.wv)
+- 3GP (.3gp)
+- AMR (.amr)
+- AC3 (.ac3)
+- DTS (.dts)
+- And many more...
+
+To install ffmpeg:
+
+- Windows: `winget install ffmpeg` or download from https://ffmpeg.org
+- macOS: `brew install ffmpeg`
+- Ubuntu/Debian: `sudo apt install ffmpeg`
+
+# Usage
+
+Same command line as OpenAI Whisper.
+
+To transcribe:
+
+    whisper-ctranslate2 inaguracio2011.mp3 --model medium
+
+<img alt="image" src="https://user-images.githubusercontent.com/309265/226923541-8326c575-7f43-4bba-8235-2a4a8bdfb161.png">
+
+To translate:
+
+    whisper-ctranslate2 inaguracio2011.mp3 --model medium --task translate
+
+<img alt="image" src="https://user-images.githubusercontent.com/309265/226923535-b6583536-2486-4127-b17b-c58d85cdb90f.png">
+
+Whisper translate task translates the transcription from the source language to English (the only target language supported).
+
+Additionally using:
+
+    whisper-ctranslate2 --help
+
+All the supported options with their help are shown.
+
+# CTranslate2 specific options
+
+On top of the OpenAI Whisper command line options, there are some specific options provided by CTranslate2 or whiper-ctranslate2.
+
+## Batched inference
+
+Batched inference transcribes each segment independently which can provide an additional 2x-4x speed increase:
+
+    whisper-ctranslate2 inaguracio2011.mp3 --batched True
+
+You can additionally use the --batch_size to specify the maximum number of parallel requests to model for decoding.
+
+Batched inference uses Voice Activity Detection (VAD) filter and ignores the following parameters: compression_ratio_threshold, logprob_threshold,
+no_speech_threshold, condition_on_previous_text, prompt_reset_on_temperature, prefix, hallucination_silence_threshold.
+
+## Quantization
+
+`--compute_type` option which accepts _default,auto,int8,int8_float16,int16,float16,float32_ values indicates the type of [quantization](https://opennmt.net/CTranslate2/quantization.html) to use. On CPU _int8_ will give the best performance:
+
+    whisper-ctranslate2 myfile.mp3 --compute_type int8
+
+## Loading the model from a directory
+
+`--model_directory` option allows to specify the directory from which you want to load a CTranslate2 Whisper model. For example, if you want to load your own quantized [Whisper model](https://opennmt.net/CTranslate2/conversion.html) version or using your own [Whisper fine-tuned](https://github.com/huggingface/community-events/tree/main/whisper-fine-tuning-event) version. The model must be in CTranslate2 format.
+
+## Using Voice Activity Detection (VAD) filter
+
+`--vad_filter` option enables the voice activity detection (VAD) to filter out parts of the audio without speech. This step uses the [Silero VAD model](https://github.com/snakers4/silero-vad):
+
+    whisper-ctranslate2 myfile.mp3 --vad_filter True
+
+The VAD filter accepts multiple additional options to determine the filter behavior:
+
+    --vad_onset VALUE (float)
+
+Probabilities above this value are considered as speech.
+
+    --vad_min_speech_duration_ms (int)
+
+Final speech chunks shorter min_speech_duration_ms are thrown out.
+
+    --vad_max_speech_duration_s VALUE (int)
+
+Maximum duration of speech chunks in seconds. Longer will be split at the timestamp of the last silence.
+
+## Print colors
+
+`--print_colors True` options prints the transcribed text using a color coding strategy based on [whisper.cpp](https://github.com/ggerganov/whisper.cpp) to highlight words with high or low confidence:
+
+    whisper-ctranslate2 myfile.mp3 --print_colors True
+
+<img alt="image" src="https://user-images.githubusercontent.com/309265/228054378-48ac6af4-ce4b-44da-b4ec-70ce9f2f2a6c.png">
+
+## Live transcribe from your microphone
+
+`--live_transcribe True` option activates the live transcription mode from your microphone:
+
+    whisper-ctranslate2 --live_transcribe True --language en
+
+https://user-images.githubusercontent.com/309265/231533784-e58c4b92-e9fb-4256-b4cd-12f1864131d9.mov
+
+## Diarization (speaker identification)
+
+Diarization support using [`pyannote.audio`](https://github.com/pyannote/pyannote-audio) to identify speakers. At the moment, the support is at segment level.
+
+To enable diarization you need to follow these steps:
+
+1. Install [`pyannote.audio`](https://github.com/pyannote/pyannote-audio) with `pip install "pyannote.audio==4.0"`
+2. Accept [`pyannote/speaker-diarization-community-1`](https://huggingface.co/pyannote/speaker-diarization-community-1) user conditions
+3. Create an access token at [`hf.co/settings/tokens`](https://hf.co/settings/tokens).
+
+And then execute passing the HuggingFace API token as parameter to enable diarization:
+
+    whisper-ctranslate2 --hf_token YOUR_HF_TOKEN
+
+and then the name of the speaker is added in the output files (e.g. JSON, VTT and SRT files):
+
+_[SPEAKER_00]: There is a lot of people in this room_
+
+The option `--speaker_name SPEAKER_NAME` allows to use your own string to identify the speaker.
+
+# Need help?
+
+Check our [frequently asked questions](FAQ.md) for common questions.
+
+# Contact
+
+Jordi Mas <jmas@softcatala.org>

@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  check-code-format:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dev tools
+        run: |
+          pip install --no-cache-dir -e .[dev]
+
+      - name: Check code format with Black
+        run: |
+          black --check src/ tests/ e2e-tests/
+
+      - name: Check code style with Flake8
+        if: ${{ always() }}
+        run: |
+          flake8 src/ tests/ e2e-tests/
+
+      - name: Check code style with isort
+        if: ${{ always() }}
+        run: |
+          isort --check-only src/ tests/ e2e-tests/
+
+  run-tests:
+    environment: CI/CD
+    strategy:
+      matrix:
+        os: [ ubuntu-22.04, windows-latest ]
+        python-version: ["3.10", "3.11", "3.12", "3.13",  "3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Ubuntu dependency
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Windows dependency
+        if: startsWith(matrix.os, 'windows')
+        run: |
+            choco install ffmpeg -y
+
+      - name: Install module
+        run: |
+         pip install --no-cache-dir -e .[dev]
+
+      - name: Run tests
+        run: |
+          make run-tests
+
+      - name: Run e2e tests
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      
+        run: |
+          make install-dependencies-e2e-tests
+          make run-e2e-tests
+
+  build-package-and-run-tests:
+    environment: CI/CD
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+
+      - name: Install dependencies
+        run: |
+          pip install wheel twine setuptools
+
+      - name: Build package
+        run: |
+          python3 setup.py sdist bdist_wheel
+
+      - name: Install package
+        run: |
+         pip install dist/*.whl
+
+      - name: Run tests
+        run: |
+          whisper-ctranslate2 e2e-tests/gossos.mp3
