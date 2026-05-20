@@ -12,7 +12,7 @@ from .commandline import CommandLine
 from .exit_code import ExitCode
 from .languages import from_language_to_iso_code
 from .live import Live
-from .transcribe import Transcribe
+from .transcribe import Transcribe, TranscriptionOptions
 from .transcribe_whisperx import TranscribeWhisperX
 from .writers import get_writer
 
