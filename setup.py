@@ -1,14 +1,15 @@
 ﻿import pathlib
+import sys
 from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
-README = (HERE / "README.md").read_text()
+README = (HERE / "README.md").read_text(encoding="utf-8")
 
 def read_version():
     """Read version using AST instead of exec for security."""
     import ast
     fname = HERE / "src/whisper_ctranslate2/version.py"
-    with open(fname) as f:
+    with open(fname, encoding="utf-8") as f:
         tree = ast.parse(f.read())
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
@@ -22,7 +23,7 @@ def read_version():
 def read_requirements(fname="requirements.txt"):
     """Read requirements from file and return as list."""
     requirements_file = HERE / fname
-    with open(requirements_file) as f:
+    with open(requirements_file, encoding="utf-8") as f:
         return [line.strip() for line in f
                 if line.strip() and not line.startswith('#')]
 

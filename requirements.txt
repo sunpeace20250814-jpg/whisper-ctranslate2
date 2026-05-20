@@ -1,4 +1,4 @@
-﻿# Core dependencies with version constraints for Google Colab
+# Core dependencies with version constraints for Google Colab
 numpy>=1.24.0,<2.0.0
 faster-whisper>=1.2.0
 ctranslate2>=4.0.0
