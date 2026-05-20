@@ -4,9 +4,10 @@ from setuptools import setup, find_packages
 HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
-def read_version(fname="src/whisper_ctranslate2/version.py"):
+def read_version():
     """Read version using AST instead of exec for security."""
     import ast
+    fname = HERE / "src/whisper_ctranslate2/version.py"
     with open(fname) as f:
         tree = ast.parse(f.read())
     for node in ast.walk(tree):
