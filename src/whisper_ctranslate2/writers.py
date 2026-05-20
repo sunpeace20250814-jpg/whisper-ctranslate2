@@ -1,4 +1,4 @@
-#
+﻿#
 # Based on code from https://github.com/openai/whisper
 #
 
@@ -37,8 +37,12 @@ class ResultWriter:
         self.output_dir = output_dir
 
     def __call__(self, result: dict, audio_path: str, options: dict):
-        audio_basename = os.path.basename(audio_path)
-        audio_basename = os.path.splitext(audio_basename)[0]
+        # Sanitize basename to prevent path traversal attacks
+        raw_basename = os.path.basename(audio_path)
+        safe_basename = re.sub(r"[^a-zA-Z0-9._-]", "_", raw_basename).replace("..", "_")
+        if not safe_basename or safe_basename.startswith("."):
+            safe_basename = "audio"
+        audio_basename = safe_basename
         output_path = os.path.join(
             self.output_dir, audio_basename + "." + self.extension
         )
@@ -48,7 +52,6 @@ class ResultWriter:
 
     def write_result(self, result: dict, file: TextIO, options: dict):
         raise NotImplementedError
-
 
 class SubtitlesWriter(ResultWriter):
     always_include_hours: bool = False
@@ -258,3 +261,4 @@ def get_writer(
         return write_all
 
     return writers[output_format](output_dir)
+

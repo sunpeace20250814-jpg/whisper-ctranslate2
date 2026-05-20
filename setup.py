@@ -1,13 +1,22 @@
-import pathlib
+﻿import pathlib
 from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 def read_version(fname="src/whisper_ctranslate2/version.py"):
-    version = {}
-    exec(compile(open(fname).read(), fname, "exec"), version)
-    return version["__version__"]
+    """Read version using AST instead of exec for security."""
+    import ast
+    with open(fname) as f:
+        tree = ast.parse(f.read())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "__version__":
+                    value = ast.literal_eval(node.value)
+                    if isinstance(value, str):
+                        return value
+    raise ValueError(f"Could not find __version__ in {fname}")
 
 def read_requirements(fname="requirements.txt"):
     """Read requirements from file and return as list."""
@@ -28,10 +37,6 @@ setup(
     license="MIT",
     classifiers=[
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

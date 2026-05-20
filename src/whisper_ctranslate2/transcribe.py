@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import tempfile
 from typing import BinaryIO, List, NamedTuple, Optional, Union
@@ -141,11 +141,11 @@ class Transcribe:
             local_files_only=local_files_only,
         )
 
+        # Limit batch_size to prevent OOM
+        if batch_size is not None:
+            batch_size = min(max(1, batch_size), 32)  # Clamp to 1-32 range
+
         self.batch_size = batch_size
-        if batched:
-            self.batched_model = BatchedInferencePipeline(model=self.model)
-        else:
-            self.batched_model = None
 
     def inference(
         self,

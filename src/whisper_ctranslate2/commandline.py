@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 
 from .languages import LANGUAGES, TO_LANGUAGE_CODE
 from .version import __version__
@@ -324,13 +324,13 @@ class CommandLine:
         algorithm_args.add_argument(
             "--prepend_punctuations",
             type=str,
-            default="\"'“¿([{-",
+            default="\"'??[{-",
             help="If word_timestamps is True, merge these punctuation symbols with the next word",
         )
         algorithm_args.add_argument(
             "--append_punctuations",
             type=str,
-            default="\"'.。,，!！?？:：”)]}、",
+            default="\"'.??嚗?嚗?嚗?嚗?]}??,
             help="If word_timestamps is True, merge these punctuation symbols with the previous word",
         )
         algorithm_args.add_argument(
@@ -438,11 +438,7 @@ class CommandLine:
         )
 
         diarization_args = parser.add_argument_group("Diarization options")
-        diarization_args.add_argument(
-            "--hf_token",
-            type=str,
-            default="",
-            help="HuggingFace token which enables downloading the diarization models.",
+        diarization_args.add_argument("--hf_token", type=str, default="", help="HuggingFace token (or set HF_TOKEN env var)"),
         )
 
         diarization_args.add_argument(
@@ -490,3 +486,4 @@ class CommandLine:
         )
 
         return parser.parse_args().__dict__
+

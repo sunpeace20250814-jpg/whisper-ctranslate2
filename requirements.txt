@@ -1,7 +1,8 @@
-numpy
+﻿# Core dependencies with version constraints for Google Colab
+numpy>=1.24.0,<2.0.0
 faster-whisper>=1.2.0
-ctranslate2
-tqdm
-sounddevice
-pydub
-soundfile
+ctranslate2>=4.0.0
+tqdm>=4.65.0
+sounddevice>=0.4.6
+pydub>=0.25.0
+soundfile>=0.12.0

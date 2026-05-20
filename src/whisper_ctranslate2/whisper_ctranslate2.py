@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 import os
 import sys
 import traceback
@@ -68,7 +68,7 @@ def get_transcription_options(args):
         suppress_blank=args.get("suppress_blank", True),
         suppress_tokens=suppress_tokens,
         word_timestamps=args.get("word_timestamps", False),
-        prepend_punctuations=args.get("prepend_punctuations", "\"'\"¿([{-"),
+        prepend_punctuations=args.get("prepend_punctuations", "\"'\"聶([{-"),
         append_punctuations=args.get("append_punctuations"),
         print_colors=args.get("print_colors", False),
         hallucination_silence_threshold=args.get("hallucination_silence_threshold"),
@@ -301,18 +301,16 @@ def main():
             writer(result, audio_path, writer_args)
 
         except Exception as e:
-            error_details = traceback.format_exc()
-            sys.stderr.write(
-                f"Error: Unable to process file: {audio_path}\n"
-                f"Exception Type: {type(e).__name__}\n"
-                f"Exception Message: {e}\n"
-                f"Traceback:\n{error_details}\n"
-            )
+            # Only show detailed error info in verbose mode
+            sys.stderr.write(f"Error: Unable to process file: {audio_path}\n")
+            sys.stderr.write(f"Exception: {type(e).__name__}: {e}\n")
+            if verbose:
+                sys.stderr.write(f"Traceback:\n{traceback.format_exc()}\n")
             continue
-
     if verbose:
         print(f"Transcription results written to '{output_dir}' directory")
 
 
 if __name__ == "__main__":
     main()
+
