@@ -1,53 +1,86 @@
 import numpy as np
 from collections import OrderedDict
+from typing import Optional
 
 from faster_whisper.audio import decode_audio
 
-try:
-    import torch
-except Exception as e:
-    print(f"Unable to import torch library. Make sure that it's installed. Error: {e}")
-
-try:
-    from pyannote.audio import Pipeline
-except Exception as e:
-    print(
-        f"Unable to import pyannote.audio library. Make sure that it's installed. Error: {e}"
-    )
-
+class DiarizationError(Exception):
+    '''Custom exception for diarization errors.'''
+    pass
 
 class Diarization:
     def __init__(
         self,
-        token=None,
+        token: Optional[str] = None,
         device: str = "cpu",
-        num_speakers=2,
+        num_speakers: int = 2,
     ):
         self.device = device
         self.token = token
         self.num_speakers = num_speakers
         self.model = None
+        self._torch_available = False
+        self._pyannote_available = False
+        self._check_dependencies()
 
-    def set_threads(self, threads):
-        torch.set_num_threads(threads)
+    def _check_dependencies(self):
+        try:
+            import torch
+            self._torch_available = True
+        except ImportError as e:
+            raise DiarizationError(
+                f"Unable to import torch library: {e}. Make sure PyTorch is installed."
+            ) from e
 
-    def unload_model(self):
-        if self.model:
+        try:
+            from pyannote.audio import Pipeline
+            self._pyannote_available = True
+        except ImportError as e:
+            raise DiarizationError(
+                f"Unable to import pyannote.audio library: {e}. Make sure pyannote.audio is installed."
+            ) from e
+
+    def set_threads(self, threads: int) -> None:
+        if self._torch_available:
+            import torch
+            torch.set_num_threads(threads)
+
+    def unload_model(self) -> None:
+        if self.model is not None:
             del self.model
+            import torch
             torch.cuda.empty_cache()
+        self.model = None
 
     def _load_model(self):
+        if not self._pyannote_available:
+            raise DiarizationError("pyannote.audio is not available")
+        if not self.token:
+            raise DiarizationError(
+                "HuggingFace token is required for diarization. "
+                "Get one at https://huggingface.co/settings/tokens"
+            )
+
+        from pyannote.audio import Pipeline
+        import torch
+
         model_name = "pyannote/speaker-diarization-community-1"
         device = torch.device(self.device)
         model_handle = Pipeline.from_pretrained(model_name, token=self.token)
         if model_handle is None:
-            raise ValueError(
-                f"The token Hugging Face token '{self.token}' for diarization is not valid or you did not accept the EULAs for the necessary models. See https://github.com/Softcatala/whisper-ctranslate2#diarization-speaker-identification"
+            raise DiarizationError(
+                f"The HuggingFace token is not valid or you did not accept the EULAs for the necessary models. "
+                f"See https://github.com/Softcatala/whisper-ctranslate2#diarization-speaker-identification"
             )
 
         self.model = model_handle.to(device)
 
     def run_model(self, audio: str):
+        if not self._torch_available:
+            raise DiarizationError("torch is required but not available")
+
+        import torch
+
         if self.model is None:
             self._load_model()
         audio = decode_audio(audio)
@@ -58,7 +91,7 @@ class Diarization:
         segments = self.model(audio_data, num_speakers=self.num_speakers)
         return segments
 
-    def assign_speakers_to_segments(self, segments, transcript_result, speaker_name):
+    def assign_speakers_to_segments(self, segments, transcript_result, speaker_name: Optional[str] = None):
         diarize_data = []
         for turn, speaker in segments.speaker_diarization:
             diarize_data.append((turn, None, speaker))
@@ -68,7 +101,7 @@ class Diarization:
         )
 
     def _do_assign_speakers_to_segments(
-        self, diarize_data, transcript_result, speaker_name
+        self, diarize_data, transcript_result, speaker_name: Optional[str]
     ):
         diarize_df = np.array(
             diarize_data,

@@ -59,6 +59,19 @@ class TranscriptionOptions(NamedTuple):
     return_scores: bool
 
 
+class TranscribeOptions(NamedTuple):
+    """Options for Transcribe class initialization."""
+    model_path: str
+    device: str
+    device_index: Union[int, List[int]]
+    compute_type: str
+    threads: int
+    cache_directory: str
+    local_files_only: bool
+    batched: bool
+    batch_size: Optional[int] = None
+
+
 class Transcribe:
     def _get_colored_text(self, words):
         k_colors = [
@@ -116,7 +129,7 @@ class Transcribe:
         cache_directory: str,
         local_files_only: bool,
         batched: bool,
-        batch_size: int = None,
+        batch_size: Optional[int] = None,
     ):
         self.model = WhisperModel(
             model_path,
@@ -145,7 +158,7 @@ class Transcribe:
     ):
         temp_audio_path = None
         try:
-            audio, temp_audio_path = ensure_audio_file(audio)
+            audio, temp_audio_path = ensure_audio_file(audio)  # type: ignore
 
             vad_parameters = self._get_vad_parameters_dictionary(options)
 

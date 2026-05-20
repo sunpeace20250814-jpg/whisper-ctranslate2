@@ -31,7 +31,7 @@ def format_timestamp(
 
 
 class ResultWriter:
-    extension: str
+    extension: str = ""
 
     def __init__(self, output_dir: str):
         self.output_dir = output_dir
@@ -51,8 +51,8 @@ class ResultWriter:
 
 
 class SubtitlesWriter(ResultWriter):
-    always_include_hours: bool
-    decimal_marker: str
+    always_include_hours: bool = False
+    decimal_marker: str = "."
 
     def iterate_result(self, result: dict, options: dict):
         raw_max_line_width: Optional[int] = options.get("max_line_width", None)
